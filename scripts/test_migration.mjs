@@ -1,0 +1,6 @@
+/** Gerçek ana süreç başlangıcını OS adaptörüyle çalıştırır; eski veri konumunun korunmasını sınar. */
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import path from 'node:path';import {createRequire} from 'node:module';
+const realRequire=createRequire(import.meta.url),calls={},legacyRoaming=path.resolve('/test/legacy-roaming'),electron={protocol:{registerSchemesAsPrivileged:schemes=>calls.schemes=schemes},app:{setName:name=>calls.name=name,setPath:(key,value)=>calls[key]=value,setAppUserModelId:id=>calls.appId=id,getPath:key=>{assert.equal(key,'appData');return legacyRoaming;},getVersion:()=> '1.4.0',requestSingleInstanceLock:()=>false,whenReady:()=>new Promise(()=>{})}};
+vm.runInNewContext(fs.readFileSync(new URL('../desktop/main.cjs',import.meta.url),'utf8'),{require:name=>name==='electron'?electron:realRequire(name),__dirname:path.resolve('desktop'),console,process});
+assert.equal(calls.name,'Seiri');assert.equal(calls.userData,path.join(legacyRoaming,'Zaman'),'Yeniden adlandırma eski not/kasa/ayar dizinini değiştiremez');assert.equal(calls.appId,'com.optimetechnology.seiri');assert.equal(calls.schemes[0].scheme,'zaman','Yerel origin değişirse eski localStorage/IndexedDB görünmez');
+console.log('PASS: Seiri markası ve AUMID; eski kullanıcı veri dizini ve localStorage/IndexedDB origin sürekliliği.');

@@ -1,0 +1,8 @@
+{
+  "tasks": 200,
+  "events": 5000,
+  "milliseconds": 86.4,
+  "platform": "linux",
+  "node": "v24.22.1",
+  "windows_physical_test": false
+}

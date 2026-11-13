@@ -1,0 +1,18 @@
+{
+  "name": "seiri",
+  "productName": "Seiri",
+  "version": "1.9.0",
+  "description": "Seiri — Takvim, notlar ve odak stüdyosu",
+  "author": "Optime Technology",
+  "private": true,
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "build:web": "python scripts/package_web.py",
+    "test": "node scripts/test.mjs && node scripts/test_ui.mjs && node scripts/test_study.mjs && node scripts/test_security.mjs && node scripts/test_planner.mjs && node scripts/test_plan_transactions.mjs && node scripts/test_migration.mjs && node scripts/test_sound.mjs && node scripts/test_motion.mjs && node scripts/test_refinement.mjs && node scripts/test_workspace.mjs && node scripts/test_covers.mjs && node scripts/test_notebook190.mjs",
+    "package:win": "python scripts/package_windows.py"
+  },
+  "devDependencies": {
+    "electron": "45.3.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "icon_sizes": 7,
+  "company": "Optime Technology",
+  "product_name": "Seiri",
+  "exe_resources_verified": true,
+  "unsigned_custom_executable": true,
+  "custom_executable_sha256": "9b3aa064aff7e8a474ddef39c145c00f871c8ecb167875f7fc07f60bf0954472",
+  "app_version": "1.9.0",
+  "security_unit_tests": "passed_mock_os_provider",
+  "planner_tests": "passed",
+  "notebook_and_checklist_tests": "passed",
+  "physical_windows_security_tested": false,
+  "electron": "45.3.0",
+  "runtime_sha256": "b43b532e712a4323f4224627b73808a039c9769fdf7ba1dbc3cb49c1dbfa350b",
+  "runtime_official_checksum_verified": true,
+  "windows_exe_pe_x64_verified": true,
+  "windows_runtime_tested": false,
+  "frontend_and_reminder_tests": "passed"
+}
