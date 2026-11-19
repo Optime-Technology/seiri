@@ -1,0 +1,12 @@
+node_modules/
+build/
+app/build/
+.gradle/
+local.properties
+*.apk
+*.idsig
+app/src/main/assets/cloud-config.json
+.env
+.env.*
+__pycache__/
+debug-signing/

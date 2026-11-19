@@ -3,7 +3,7 @@
 function planAndroidReminders(entries, preferences, now) {
     const result = [];
     for (const entry of entries) {
-        if (entry.type !== 'event' || entry.deleted_at || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date || '') || !/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.time || '')) continue;
+        if (entry.type !== 'event' || entry.deleted_at || entry.deletedAt || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date || '') || !/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.time || '')) continue;
         const start = Date.parse(entry.date + 'T' + entry.time + ':00+03:00');
         if (!Number.isFinite(start) || start <= now) continue;
         for (const minutes of [30, 1440]) {

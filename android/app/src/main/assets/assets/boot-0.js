@@ -1,0 +1,1 @@
+try{document.documentElement.dataset.theme=localStorage.getItem("zaman-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch{}try{var skin=localStorage.getItem("zaman-skin");document.documentElement.dataset.skin=["seiri","lofi","academic"].includes(skin)?skin:"seiri";if(skin==="lofi")document.documentElement.dataset.theme="dark"}catch{}

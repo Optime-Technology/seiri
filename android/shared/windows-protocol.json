@@ -1,0 +1,10 @@
+{
+  "version": "1.18.0",
+  "sha256": {
+    "sync-model.cjs": "05dd327486930e7779a28876be505d5e9c9ab269503319103f5dccded8737764",
+    "sync-engine.cjs": "7a654d273c18299fcc2e81003326ee284c1d84b748da534c6d8112ed04c57a61",
+    "sync-resolution.cjs": "c8c626dc6fce49a72a52fd50c5250c3c7bf4a060a4defbcc644c040390af87cc",
+    "cloud-files.cjs": "24d9b26e4382573034a42a002e50fd4f3eb166d0eceb58bbea5cb8b084a75d6a",
+    "transfer-model.cjs": "530cbfabc5e2492acdc3f8186fc52a8e1973d848e9c7b1465b51be378610447a"
+  }
+}

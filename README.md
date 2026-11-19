@@ -5,8 +5,10 @@ Optime Technology tarafından geliştirilen kişisel ajanda uygulaması.
 
 [Windows sürümünü indir](https://github.com/Optime-Technology/seiri/releases) · [Tüm sürümler](https://github.com/Optime-Technology/seiri/releases) · [Hata bildir / öneri paylaş](https://github.com/Optime-Technology/seiri/issues)
 
-> **Sürüm: 1.16.0 — Windows Beta**  
+> **Sürüm: 1.18.0 — Windows Beta**  
 > Windows 10/11, 64 bit sistemler içindir. Beta indirmeleri için [sürümler sayfasını](https://github.com/Optime-Technology/seiri/releases) kullanın. Bu depodaki güncel paket Windows içindir; Android ve iOS mağaza paketleri bu sürüme dahil değildir.
+
+Not eşitlemesinde son düzenleme ve bağımsız alan birleştirmesi kullanılır; önceki metin sürüm geçmişinde korunur. Silme revizyon yarışında kaybolmaz. Android istemcisi de 1.18.0 ile birlikte güncellenmelidir. Ayrıntı ve testler: [Not eşitlemesi 1.18](docs/SENKRONIZASYON_1.18.md).
 
 ## Özellikler
 

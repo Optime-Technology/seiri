@@ -1,4 +1,6 @@
-# Seiri 1.16.0 · Optime Technology
+> Güncel eşitleme davranışı: [1.18 not eşitlemesi](docs/SENKRONIZASYON_1.18.md). Bu bölüm eski sürüm notlarının yerine geçer. İki cihazı da 1.18.0 sürümüne güncelleyin.
+
+# Seiri 1.18.0 · Optime Technology
 
 Ders notlarını, günlük planını ve odak oturumlarını birleştiren sakin çalışma uygulaması. Windows beta sürümü. Google girişi ve kişisel alan eşitlemesi eklendi. Bu bilgisayar alanı yerel kalır; ekip eşitlemesi henüz etkin değildir.
 

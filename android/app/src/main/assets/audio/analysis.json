@@ -1,0 +1,63 @@
+{
+  "seed": 20261112,
+  "sample_rate": 48000,
+  "duration_seconds": 120,
+  "crossfade_seconds": 4,
+  "target_lufs": -25.0,
+  "sounds": {
+    "brown": {
+      "spectrum_db_per_octave_100_1500hz": -6.009,
+      "loop_step": 0.002204790711402893,
+      "step_99_percentile": 0.011241436004638672,
+      "artifacts": [
+        {
+          "decoded_seconds": 120.0,
+          "decoded_loop_step": 0.007528688758611679,
+          "decoded_step_p99": 0.011250197887420654,
+          "file": "brown.ogg",
+          "bytes": 1295790,
+          "sha256": "2c1f8f4d3a06e497cd329d7322e8c69554ee659c59f248095d08fd87185b3261",
+          "integrated_lufs": -25.0,
+          "true_peak_dbtp": -6.92
+        },
+        {
+          "decoded_seconds": 120.0,
+          "decoded_loop_step": 0.009227670729160309,
+          "decoded_step_p99": 0.011052533984184265,
+          "file": "brown.m4a",
+          "bytes": 1469222,
+          "sha256": "09e9e5a2df85f30c9a0bfda556896f7296f6e271a5615dd6911baa4a418468d2",
+          "integrated_lufs": -25.05,
+          "true_peak_dbtp": -6.82
+        }
+      ]
+    },
+    "rain": {
+      "spectrum_db_per_octave_100_1500hz": -4.184,
+      "loop_step": 0.0016100890934467316,
+      "step_99_percentile": 0.01133832335472107,
+      "artifacts": [
+        {
+          "decoded_seconds": 120.0,
+          "decoded_loop_step": 0.0004895441234111786,
+          "decoded_step_p99": 0.011338748037815094,
+          "file": "rain.ogg",
+          "bytes": 1297294,
+          "sha256": "a57dd44150f8a515dd757dba0731a1269aa8a857c8de8348a626ea0cce3a1703",
+          "integrated_lufs": -25.0,
+          "true_peak_dbtp": -8.58
+        },
+        {
+          "decoded_seconds": 120.0,
+          "decoded_loop_step": 0.010667707771062851,
+          "decoded_step_p99": 0.011276965960860252,
+          "file": "rain.m4a",
+          "bytes": 1468642,
+          "sha256": "fe0c77b33324bc97bd39f637921b50d4555310e46895e110aa1b7993ed5d86cd",
+          "integrated_lufs": -25.02,
+          "true_peak_dbtp": -8.76
+        }
+      ]
+    }
+  }
+}

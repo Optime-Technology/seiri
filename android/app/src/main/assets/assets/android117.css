@@ -1,0 +1,3 @@
+/* Telefonun klavyesi, erişilebilir dokunma alanları ve tam sayfa not düzeni. */
+html,body{overscroll-behavior-y:none}button,a{-webkit-tap-highlight-color:transparent}
+@media(max-width:700px){input,textarea,select,[contenteditable]{font-size:16px}button{touch-action:manipulation}#settingsDrawer{max-width:min(94vw,440px)}.writingPage{width:100vw!important;max-width:none!important;inset:0!important;border:0!important;border-radius:0!important}.writingCanvas{max-width:none!important;width:100%!important;padding-inline:20px!important}.drawerSave,.drawerTest{min-height:44px}.richToolbar{overflow-x:auto;flex-wrap:nowrap!important;max-width:100vw}.richToolbar .toolgroup{flex-shrink:0}.writerToolbar{overflow-x:auto}.brandSub{font-size:8px}}

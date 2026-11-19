@@ -1,0 +1,4 @@
+import esbuild from 'esbuild';import path from 'node:path';import fs from 'node:fs';
+const root=path.resolve(import.meta.dirname,'..');
+await esbuild.build({entryPoints:[path.join(root,'cloud/entry.js')],outfile:path.join(root,'app/src/main/assets/assets/android-cloud.js'),bundle:true,platform:'browser',format:'iife',target:['chrome100'],minify:true,legalComments:'eof',define:{'process.env.NODE_ENV':'"production"'},inject:[path.join(root,'cloud/buffer-shim.js')],plugins:[{name:'android-native-adapters',setup(b){b.onResolve({filter:/^node:crypto$/},()=>({path:path.join(root,'cloud/crypto.cjs')}));b.onResolve({filter:/account-spaces\.cjs$/},()=>({path:path.join(root,'cloud/native-store.cjs')}));}}]});
+console.log('Android bulut istemcisi paketlendi; Windows kayıt modeli ve kuyruğu aynen kullanıldı.');
