@@ -1,0 +1,36 @@
+name: Kullanım yardımı
+description: Seiri'yi kullanırken takıldığınız adımlar için yardım isteyin.
+title: "[Yardım] "
+body:
+  - type: markdown
+    attributes:
+      value: "Bu kayıt herkese açıktır. Not, parola, e-posta, anahtar veya hassas ekran görüntüsü paylaşmayın. Önce kullanım rehberini inceleyin."
+  - type: input
+    id: version
+    attributes:
+      label: Seiri ve Windows sürümü
+      placeholder: Seiri 1.14.0 / Windows 11
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Bölüm
+      options:
+        - Notlar ve görseller
+        - Dersler ve çalışma akışı
+        - Hazır düzenler
+        - Takvim ve görevler
+        - Odak ve sesler
+        - Yedek ve kurtarma
+        - Kurulum veya güncelleme
+        - Diğer
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Hangi işlemi yapmak istiyorsunuz, nerede takıldınız?
+      description: Kişisel not içeriği yerine örnek başlıklar kullanın.
+    validations:
+      required: true

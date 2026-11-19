@@ -1,7 +1,7 @@
 'use strict';
 /** Marka roketi, hızlı araçlar ve açılış sahnesi. Çizim uygulamanın kendi SVG varlığıdır. */
 window.FocusRocket=(()=>{
- const markup=prefix=>`<svg class="brandRocket" viewBox="0 0 64 96" fill="none" aria-hidden="true"><defs><linearGradient id="${prefix}Body" x1="16" x2="47" y2="50" gradientUnits="userSpaceOnUse"><stop stop-color="#b97625"/><stop offset=".42" stop-color="#ffe7a0"/><stop offset=".72" stop-color="#e9b24d"/><stop offset="1" stop-color="#b76d24"/></linearGradient><linearGradient id="${prefix}Fire" x1="32" y1="67" x2="32" y2="95" gradientUnits="userSpaceOnUse"><stop stop-color="#ffe4a1"/><stop offset=".55" stop-color="#eab256"/><stop offset="1" stop-color="#dc8956" stop-opacity="0"/></linearGradient></defs><path class="rocketFlame" d="M25 65Q22 82 32 95Q42 82 39 65Z" fill="url(#${prefix}Fire)"/><path d="M21 42Q6 51 7 70L22 64ZM43 42Q58 51 57 70L42 64Z" fill="#c28c3f"/><path d="M32 3C17 17 16 33 19 58L24 69H40L45 58C48 33 47 17 32 3Z" fill="url(#${prefix}Body)"/><path d="M32 3Q23 15 21 26Q32 30 43 26Q41 15 32 3Z" fill="#f5cf79"/><circle cx="32" cy="38" r="9" fill="#b57d31"/><circle cx="32" cy="38" r="6.5" fill="#252b43"/><circle cx="30" cy="36" r="2" fill="#b0c7d1" fill-opacity=".8"/><path d="M26 68H38L40 74H24Z" fill="#766044"/><path d="M32 50L35 65L32 79L29 65Z" fill="#a97732"/></svg>`;
+ const markup=prefix=>window.SeiriBrand.rocket(prefix);
  const timings=()=>window.FocusMotion.values;
  const quiet=()=>window.FocusMotion?.quiet()??matchMedia('(prefers-reduced-motion: reduce)').matches;
  let dock,button,menu,rocket,opened=false,revision=0;

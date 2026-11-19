@@ -1,0 +1,37 @@
+{
+  "format": "seiri-study-kit",
+  "version": 1,
+  "id": "reading",
+  "name": "Okuma ve araştırma",
+  "course": {
+    "name": "Okuma çalışmam",
+    "term": ""
+  },
+  "notes": [
+    {
+      "title": "Okuma notu",
+      "subject": "Kaynak incelemesi",
+      "html": "<h2>Kaynak bilgisi</h2><p><br></p><h2>Ana sav</h2><p><br></p><h2>Kanıtlar ve alıntılar</h2><blockquote><br></blockquote><h2>Kendi değerlendirmem</h2>",
+      "tags": [
+        "okuma"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Kaynağı oku ve not al",
+      "note": 0,
+      "day": 0,
+      "minutes": 30,
+      "priority": 2
+    },
+    {
+      "title": "Ana savı notlara bakmadan özetle",
+      "note": 0,
+      "day": 2,
+      "minutes": 15,
+      "priority": 2,
+      "review": true
+    }
+  ]
+}

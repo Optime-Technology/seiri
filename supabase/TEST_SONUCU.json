@@ -1,0 +1,25 @@
+{
+  "engine": "PostgreSQL 18.6 (PGlite 0.5.16) on wasm32-unknown-emscripten, compiled by emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.13 (e13ee988ce3d87a738dd8f3661d02223308c412a), 32-bit",
+  "runner": "PGlite 0.5.16",
+  "result": "passed",
+  "authAndStorageSchemas": "test_fixtures",
+  "liveSupabaseWrites": false,
+  "googleOAuthTested": false,
+  "desktopSyncImplemented": true,
+  "groups": [
+    "signup_backfill",
+    "workspace_rls",
+    "author_admin_owner",
+    "invites",
+    "foreign_keys",
+    "revision_cas",
+    "soft_delete",
+    "storage_policies",
+    "file_quota",
+    "owner_transfer",
+    "anon_grants",
+    "private_realtime_signal",
+    "sql_editor_smoke_script",
+    "desktop_116_payload_columns_and_fk"
+  ]
+}

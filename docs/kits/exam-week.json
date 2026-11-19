@@ -1,0 +1,52 @@
+{
+  "format": "seiri-study-kit",
+  "version": 1,
+  "id": "exam-week",
+  "name": "Sınav hazırlığı",
+  "course": {
+    "name": "Sınav hazırlığım",
+    "term": ""
+  },
+  "notes": [
+    {
+      "title": "Sınav kapsamı",
+      "subject": "Konular ve eksikler",
+      "html": "<h2>Sınav kapsamı</h2><ul><li><br></li></ul><h2>Eksik konular</h2><p><br></p><h2>Soru çözümleri</h2><p><br></p>",
+      "tags": [
+        "sınav"
+      ]
+    },
+    {
+      "title": "Tekrar özeti",
+      "subject": "Ana kavramlar",
+      "html": "<h2>Hatırladıklarım</h2><p><br></p><h2>Karıştırdıklarım</h2><p><br></p><h2>Yeniden bakılacaklar</h2>",
+      "tags": [
+        "tekrar"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Sınav kapsamını çıkar",
+      "note": 0,
+      "day": 0,
+      "minutes": 25,
+      "priority": 3
+    },
+    {
+      "title": "Eksik konulara çalış",
+      "note": 0,
+      "day": 1,
+      "minutes": 50,
+      "priority": 3
+    },
+    {
+      "title": "Özet üzerinden tekrar",
+      "note": 1,
+      "day": 2,
+      "minutes": 25,
+      "priority": 3,
+      "review": true
+    }
+  ]
+}

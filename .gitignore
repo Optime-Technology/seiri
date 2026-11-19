@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Paket oluşturulurken ortam değişkenlerinden üretilen bağlantı ayarı
+desktop/cloud-config.json

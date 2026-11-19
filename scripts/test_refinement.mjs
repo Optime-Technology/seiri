@@ -19,7 +19,8 @@ const rocketSource=fs.readFileSync(new URL('../web/ui/rocket.js',import.meta.url
 const main={tagName:'MAIN',inert:false,isConnected:true},locked={tagName:'ASIDE',inert:true,isConnected:true};
 const sprite={},intro={tagName:'SECTION',isConnected:true,querySelector:selector=>selector==='.introRocket'?sprite:{addEventListener:(_event,fn)=>skip=fn},getAnimations:()=>[],contains:()=>false,remove:()=>removed=true};
 const introDocument={getElementById:id=>id==='focusLaunchIntro'?intro:null,body:{children:[intro,main,locked]},addEventListener(){},activeElement:null};
-const introWindow={addEventListener(){},FocusMotion:{values:{short:150},animate:()=>({finished:Promise.resolve()}),quiet:()=>false}};
+const brandSandbox={window:{}};vm.runInNewContext(fs.readFileSync(new URL('../web/ui/brand.js',import.meta.url),'utf8'),brandSandbox);
+const introWindow={SeiriBrand:brandSandbox.window.SeiriBrand,addEventListener(){},FocusMotion:{values:{short:150},animate:()=>({finished:Promise.resolve()}),quiet:()=>false}};
 vm.runInNewContext(rocketSource,{window:introWindow,document:introDocument,matchMedia:()=>({matches:false,addEventListener(){}}),performance:{now:()=>0},Map,Object,Promise,setTimeout:(_fn,ms)=>{limit=ms;return 1;},clearTimeout(){}});
 assert(main.inert);assert(locked.inert);skip();await Promise.resolve();await Promise.resolve();await Promise.resolve();assert(removed);assert(!main.inert);assert(locked.inert);assert.equal(limit,3500);
 assert(introWindow.FocusRocket.markup('a').includes('aBody'));assert(introWindow.FocusRocket.markup('b').includes('bBody'));

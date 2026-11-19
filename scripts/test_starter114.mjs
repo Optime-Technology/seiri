@@ -1,0 +1,7 @@
+/** Düzen dosyalarının sınırları, tarih aritmetiği ve bilinmeyen sürüm kontrolü. */
+import assert from 'node:assert/strict';import {createRequire} from 'node:module';import fs from 'node:fs';const require=createRequire(import.meta.url),M=require('../web/ui/starter-model.js');
+for(const k of M.presets){const before=JSON.stringify(k);assert.equal(M.validate(k),k);assert.equal(JSON.stringify(k),before);assert(k.notes.length>0);for(const task of k.tasks)assert(k.notes[task.note]);}
+assert.equal(M.addDays('2028-02-28',1),'2028-02-29');assert.equal(M.addDays('2026-12-31',1),'2027-01-01');assert.equal(M.addDays('2026-03-29',1),'2026-03-30');assert.throws(()=>M.addDays('2026-02-29',1));assert.throws(()=>M.addDays('2026-15-15',1));
+for(const change of [{version:2},{format:'backup'},{id:'../../x'},{notes:[]},{tasks:[{...M.presets[0].tasks[0],note:99}]},{tasks:[{...M.presets[0].tasks[0],day:-1}]},{tasks:[{...M.presets[0].tasks[0],minutes:1}]}])assert.throws(()=>M.validate({...M.presets[0],...change}));
+const guide=fs.readFileSync(new URL('../docs/index.html',import.meta.url),'utf8');assert(guide.includes('GitHub’da yardım taslağı aç'));assert(!guide.includes('fetch('));for(const kit of M.presets){const json=JSON.parse(fs.readFileSync(new URL('../docs/kits/'+kit.id+'.json',import.meta.url),'utf8'));M.validate(json);}
+console.log('PASS: üç düzen, not/görev sınırları, biçim/sürüm reddi, artık yıl/DST bağımsız tarihler; statik yardım ve düzen dosyaları.');

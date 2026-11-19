@@ -1,26 +1,39 @@
 'use strict';
 /** Windows masaüstü kabuğu. Dosya erişimi yalnızca ana süreçte yapılır. */
-const {app,BrowserWindow,protocol,net,ipcMain,dialog,shell,Tray,Menu,Notification,nativeImage,session}=require('electron');
+const {app,BrowserWindow,protocol,net,ipcMain,dialog,shell,Tray,Menu,Notification,nativeImage,session,safeStorage}=require('electron');
 const path=require('node:path'),fs=require('node:fs'),{pathToFileURL}=require('node:url');
 protocol.registerSchemesAsPrivileged([{scheme:'zaman',privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true}}]);
 app.setName('Seiri');
 // İsim değişirken eski notlar, anahtar kasası ve ayarlar aynı yerde kalır.
 app.setPath('userData',path.join(app.getPath('appData'),'Zaman'));
 app.setAppUserModelId('com.optimetechnology.seiri');
+const metadata=require('../package.json');
 const root=path.resolve(__dirname,'../app');
 const visibleNotices=new Map();
-let security,win,tray,quitting=false,state={reminders:[],delivered:[]},stateFile;
+let spaces,activeSpace,syncEngine,cloudFiles,closeSyncWatch=()=>{},spaceGeneration=0,spaceChanging=false,cloudAuth,security,win,tray,quitting=false,state={reminders:[],delivered:[]},stateFile;
 const externalHosts=new Set(['zaman-ajanda-celil.eternalchest.chatgpt.site','vakithesaplama.diyanet.gov.tr','www.diyanet.gov.tr']);
-function external(url){try{const u=new URL(url);if(u.protocol==='https:'&&externalHosts.has(u.hostname)&&!u.username&&!u.password&&!u.port)return shell.openExternal(u.href);}catch{}return Promise.resolve();}
+function external(url){try{const u=new URL(url);if(u.protocol==='https:'&&u.hostname==='github.com'&&!u.username&&!u.password&&!u.port&&(/^\/Optime-Technology\/seiri\/releases(?:\/|$)/.test(u.pathname)||u.pathname==='/Optime-Technology/seiri/issues/new'))return shell.openExternal(u.href);if(u.protocol==='https:'&&externalHosts.has(u.hostname)&&!u.username&&!u.password&&!u.port)return shell.openExternal(u.href);}catch{}return Promise.resolve();}
 function persist(){const tmp=stateFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(state));fs.renameSync(tmp,stateFile);}
 function validSender(event){if(!win||event.sender!==win.webContents||event.senderFrame?.url!=='zaman://app/index.html')throw Error('Bu işlem için yetki yok.');}
 function handle(name,fn){ipcMain.handle(name,async(event,...args)=>{validSender(event);try{return await fn(...args);}catch(error){console.error(name,'operation_failed');throw Error('İşlem tamamlanamadı. Dosya ve sistem izinlerini kontrol et.');}});}
 function show(){if(!win||win.isDestroyed())createWindow();win.show();win.restore();win.focus();}
 function notify(item){if(security)item=security.redact(item);if(!Notification.isSupported())return;const n=new Notification({title:item.title,body:item.body,icon:path.join(__dirname,'icon.png')});n.on('click',()=>{show();win.webContents.send('open-entry',item.entryId||'');});if(item.entryId){if(!visibleNotices.has(item.entryId))visibleNotices.set(item.entryId,new Set());visibleNotices.get(item.entryId).add(n);n.on('close',()=>visibleNotices.get(item.entryId)?.delete(n));}n.show();}
 function tick(){const now=Date.now(),due=state.reminders.filter(n=>n.at<=now);if(!due.length)return;state.reminders=state.reminders.filter(n=>n.at>now);for(const n of due){if(now-n.at<24*3600000){state.delivered.unshift({...n,shownAt:now});notify(n);}}state.delivered=state.delivered.slice(0,100);persist();}
+const configuredSessions=new WeakSet();
+function configureSession(ses){if(configuredSessions.has(ses))return;configuredSessions.add(ses);
+ ses.protocol.handle('zaman',async request=>{try{const u=new URL(request.url);if(u.hostname!=='app'||!['GET','HEAD'].includes(request.method))return new Response('',{status:403});const target=path.resolve(root,'.'+decodeURIComponent(u.pathname));if(!target.startsWith(root+path.sep))return new Response('',{status:403});const response=await net.fetch(pathToFileURL(target).href),headers=new Headers(response.headers);headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' blob:; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'");return new Response(response.body,{status:response.status,headers});}catch{return new Response('Dosya bulunamadı.',{status:404});}});
+ ses.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));ses.setPermissionCheckHandler(()=>false);
+ ses.on('will-download',(_event,item)=>{item.setSaveDialogOptions({title:'Seiri · Dosyayı kaydet',defaultPath:path.join(app.getPath('downloads'),path.basename(item.getFilename()))});item.once('done',(_e,status)=>{if(win&&!win.isDestroyed())win.webContents.send('download-result',status);});});
+}
+function spaceInfo(){return {kind:activeSpace.kind,label:activeSpace.label,userId:activeSpace.userId,workspaceId:activeSpace.workspaceId};}
+function loadSpaceState(){fs.mkdirSync(activeSpace.root,{recursive:true});stateFile=path.join(activeSpace.root,'reminders.json');state={reminders:[],delivered:[]};try{const v=JSON.parse(fs.readFileSync(stateFile,'utf8'));if(Array.isArray(v.reminders)&&Array.isArray(v.delivered))state=v;}catch{}cloudFiles=require('./cloud-files.cjs').createFiles(path.join(activeSpace.root,'cloud-files.json'));}
+function switchSpace(next){if(spaceChanging||next.kind===activeSpace.kind&&next.userId===activeSpace.userId)return;closeSyncWatch();closeSyncWatch=()=>{};spaceChanging=true;spaceGeneration++;syncEngine?.stop();syncEngine=null;for(const notices of visibleNotices.values())for(const n of notices)n.close();visibleNotices.clear();try{spaces.select(next);security?.lock();win?.destroy();activeSpace=next;loadSpaceState();createWindow();}finally{spaceChanging=false;}}
+function scheduleSwitch(next){setTimeout(()=>switchSpace(next),100);return{ok:true,reloading:true};}
+async function authorizedSpace(){if(activeSpace.kind!=='account'||spaceChanging)throw Error('Önce hesabının kişisel alanını aç.');const owner=activeSpace,gen=spaceGeneration;return cloudAuth.withClient(owner.userId,async(client,identity)=>{if(identity.workspaceId!==owner.workspaceId||activeSpace!==owner||gen!==spaceGeneration)throw Error('Hesap alanı değişti.');return{client,identity:{...identity,valid:()=>identity.valid()&&activeSpace===owner&&gen===spaceGeneration&&!spaceChanging}};});}
 function createWindow(){
- win=new BrowserWindow({title:'Seiri 1.9.0 · Takvim ve Ajanda',width:1380,height:900,minWidth:860,minHeight:620,backgroundColor:'#f8f9f5',icon:path.join(__dirname,'icon.png'),show:false,autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true,spellcheck:true}});
- try{security=require('./security-ipc.cjs')({win,userData:app.getPath('userData'),onRedact:(id,remove)=>{for(const n of visibleNotices.get(id)||[])n.close();visibleNotices.delete(id);state.reminders=state.reminders.filter(n=>!remove||n.entryId!==id).map(n=>security.redact(n));state.delivered=state.delivered.filter(n=>!remove||n.entryId!==id).map(n=>security.redact(n));persist();}});}catch{win.destroy();dialog.showErrorBox('Güvenlik kasası açılamadı','Kasa dosyası okunamadı. Veriler değiştirilmedi. Uygulama veri klasörünü koruyup yedeğini kontrol et.');app.quit();return;}
+ const ses=activeSpace.partition?session.fromPartition(activeSpace.partition):session.defaultSession;configureSession(ses);
+ win=new BrowserWindow({title:metadata.productName+' '+metadata.version+' · Çalışma alanı',width:1380,height:900,minWidth:860,minHeight:620,backgroundColor:'#fffcf8',icon:path.join(__dirname,'icon.png'),show:false,autoHideMenuBar:true,webPreferences:{session:ses,additionalArguments:[activeSpace.kind==='account'?'--seiri-account-space':'--seiri-device-space'],preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true,spellcheck:true}});
+ try{security=require('./security-ipc.cjs')({win,userData:activeSpace.root,onRedact:(id,remove)=>{for(const n of visibleNotices.get(id)||[])n.close();visibleNotices.delete(id);state.reminders=state.reminders.filter(n=>!remove||n.entryId!==id).map(n=>security.redact(n));state.delivered=state.delivered.filter(n=>!remove||n.entryId!==id).map(n=>security.redact(n));persist();}});}catch{win.destroy();dialog.showErrorBox('Güvenlik kasası açılamadı','Kasa dosyası okunamadı. Veriler değiştirilmedi. Uygulama veri klasörünü koruyup yedeğini kontrol et.');app.quit();return;}
  require('./unload-guard.cjs')(win,dialog,()=>{quitting=false;});
  win.webContents.setWindowOpenHandler(({url})=>{external(url);return {action:'deny'};});
  win.webContents.on('will-navigate',(event,url)=>{if(url!=='zaman://app/index.html'){event.preventDefault();external(url);}});
@@ -29,29 +42,47 @@ function createWindow(){
 }
 if(!app.requestSingleInstanceLock({version:app.getVersion()})){app.whenReady().then(()=>{dialog.showErrorBox('Seiri veya eski sürüm zaten çalışıyor','Güncel sürümü açmak için önce sistem tepsisindeki Seiri, FocusFlow veya Zaman simgesinden Çıkış seç. Ardından yeni Seiri.exe dosyasını aç. Eski çalışan pencere yeni paketle değişmez.');app.quit();});}else{
  app.on('second-instance',()=>show());
- app.on('before-quit',()=>quitting=true);
- app.whenReady().then(()=>{
+ app.on('before-quit',()=>{quitting=true;closeSyncWatch();syncEngine?.stop();cloudAuth?.dispose();});
+ app.whenReady().then(async()=>{
   stateFile=path.join(app.getPath('userData'),'reminders.json');try{const saved=JSON.parse(fs.readFileSync(stateFile,'utf8'));if(Array.isArray(saved.reminders)&&Array.isArray(saved.delivered))state=saved;}catch{}
-  protocol.handle('zaman',async request=>{
-   try{const u=new URL(request.url);if(u.hostname!=='app'||!['GET','HEAD'].includes(request.method))return new Response('',{status:403});
-    const decoded=decodeURIComponent(u.pathname),target=path.resolve(root,'.'+decoded);if(!target.startsWith(root+path.sep))return new Response('',{status:403});
-    const response=await net.fetch(pathToFileURL(target).href);const headers=new Headers(response.headers);
-    headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' blob:; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'");
-    return new Response(response.body,{status:response.status,headers});
-   }catch{return new Response('Dosya bulunamadı.',{status:404});}
-  });
-  session.defaultSession.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
-  session.defaultSession.setPermissionCheckHandler(()=>false);
-  session.defaultSession.on('will-download',(_event,item)=>{item.setSaveDialogOptions({title:'Seiri · Dosyayı kaydet',defaultPath:path.join(app.getPath('downloads'),path.basename(item.getFilename()))});item.once('done',(_e,status)=>{if(win&&!win.isDestroyed())win.webContents.send('download-result',status);});});
-  handle('desktop:info',()=>({version:app.getVersion(),delivered:state.delivered,notifications:Notification.isSupported(),login:app.getLoginItemSettings().openAtLogin}));
+  // Google oturumu ana süreçte kalır; notların yerel veri alanına dokunulmaz.
+  let cloudConfig={};try{cloudConfig=JSON.parse(fs.readFileSync(path.join(__dirname,'cloud-config.json'),'utf8'));}catch{}
+  const {createAuthStore,electronProtector}=require('./auth-store.cjs');
+  cloudAuth=require('./cloud-auth.cjs').createAuthService({config:cloudConfig,createClient:require('@supabase/supabase-js').createClient,store:createAuthStore(path.join(app.getPath('userData'),'Seiri Cloud','auth-session.json'),electronProtector(safeStorage)),openExternal:url=>shell.openExternal(url),onChange:value=>{if(win&&!win.isDestroyed())win.webContents.send('cloud-auth-changed',value);},onSignedIn:show});
+  spaces=require('./account-spaces.cjs').createSpaces(app.getPath('userData'));activeSpace=spaces.restore(await cloudAuth.cachedIdentity());loadSpaceState();
+  for(const [channel,method]of Object.entries({info:'info',refresh:'verify',signin:'begin',cancel:'cancel'}))handle('cloud-auth:'+channel,()=>cloudAuth[method]());
+  handle('cloud-auth:signout',async()=>{closeSyncWatch();closeSyncWatch=()=>{};syncEngine?.stop();syncEngine=null;const reply=await cloudAuth.logout();if(activeSpace.kind==='account')scheduleSwitch(spaces.device);return reply;});
+  handle('space:info',()=>spaceInfo());
+  handle('space:account',async()=>{const checked=await cloudAuth.verify();let target;if(checked.ok&&checked.state.verified)target=spaces.bind(checked.state.user,checked.state.workspace);else{const cached=await cloudAuth.cachedIdentity();if(cached)target=spaces.load(cached.id);}if(!target)throw Error('Hesap doğrulanamadı. Önce Google ile giriş yap.');return scheduleSwitch(target);});
+  handle('space:device',()=>scheduleSwitch(spaces.device));
+  const {atomicJSON,readJSON}=require('./account-spaces.cjs');
+  const transferPath=()=>path.join(activeSpace.root,'transfer.json');
+  handle('space:prepare-transfer',async text=>{if(activeSpace.kind!=='device')throw Error('Aktarımı Bu bilgisayar alanından başlat.');const checked=await cloudAuth.verify();if(!checked.ok||!checked.state.verified)throw Error('Google hesabı doğrulanmalı.');const target=spaces.bind(checked.state.user,checked.state.workspace);const source=require('./backup-store.cjs').createStore(spaces.device.root+'/Seiri Backups');const backup=source.write(text),hash=require('node:crypto').createHash('sha256').update(text).digest('hex');const {counts}=require('./transfer-model.cjs').sanitizeTransfer(JSON.parse(text));const old=readJSON(path.join(target.root,'transfer.json'),null);if(old&&old.done&&!old.cancelled)return{ok:true,alreadyDone:true,counts};if(old&&!old.done&&old.hash!==hash)throw Error('Önce bekleyen aktarımı tamamla veya iptal et.');atomicJSON(path.join(spaces.device.root,'Seiri Transfers',hash+'.json'),JSON.parse(text));atomicJSON(path.join(target.root,'transfer.json'),{v:1,userId:target.userId,backupId:backup.id,hash,done:false,counts});return{ok:true,counts,target:target.label};});
+  handle('space:transfer-info',()=>{if(activeSpace.kind!=='account')return null;const value=readJSON(transferPath(),null);return value&&!value.done?{hash:value.hash,counts:value.counts}:null;});
+  handle('space:transfer-read',()=>{if(activeSpace.kind!=='account')throw Error('Hesap alanı gerekli.');const value=readJSON(transferPath(),null);if(!value||value.done||value.userId!==activeSpace.userId)throw Error('Aktarım bulunamadı.');const source=require('./backup-store.cjs').createStore(spaces.device.root+'/Seiri Backups');return{hash:value.hash,...require('./transfer-model.cjs').sanitizeTransfer(JSON.parse(fs.readFileSync(path.join(spaces.device.root,'Seiri Transfers',value.hash+'.json'),'utf8')))};});
+  handle('space:transfer-cancel',hash=>{const value=readJSON(transferPath(),null);if(!value||value.hash!==hash||value.userId!==activeSpace.userId)throw Error('Aktarım kimliği geçersiz.');atomicJSON(transferPath(),{...value,done:true,cancelled:true});return true;});
+  handle('space:transfer-done',hash=>{const value=readJSON(transferPath(),null);if(!value||value.hash!==hash||value.userId!==activeSpace.userId)throw Error('Aktarım kimliği geçersiz.');atomicJSON(transferPath(),{...value,done:true});return true;});
+  handle('cloud-sync:capture',async snapshot=>{if(activeSpace.kind!=='account')throw Error('Hesap alanı gerekli.');if(!syncEngine){const profile=activeSpace,gen=spaceGeneration;syncEngine=require('./sync-engine.cjs').createEngine({file:path.join(profile.root,'sync-journal.json'),userId:profile.userId,workspaceId:profile.workspaceId,valid:()=>activeSpace===profile&&gen===spaceGeneration,adapter:{pull:async(...args)=>{const {client,identity}=await authorizedSpace();return require('./sync-engine.cjs').supabaseAdapter(client,identity).pull(...args);},write:async(...args)=>{const {client,identity}=await authorizedSpace();return require('./sync-engine.cjs').supabaseAdapter(client,identity).write(...args);}}});}const encoded=require('./sync-model.cjs').encode(snapshot,activeSpace.workspaceId,cloudFiles.links());return syncEngine.capture(encoded.rows,encoded.blocked,snapshot.recovered===true);});
+  handle('cloud-sync:run',async()=>{if(!syncEngine)throw Error('Önce yerel değişiklikleri kaydet.');const result=await syncEngine.run();result.referenceIds=Object.fromEntries(Object.keys(result.rows).map(key=>{const at=key.indexOf(':'),table=key.slice(0,at),id=key.slice(at+1);return[require('./sync-model.cjs').idFor(activeSpace.workspaceId,table,id),id];}));return result;});
+  handle('cloud-sync:watch',async()=>{closeSyncWatch();closeSyncWatch=()=>{};const {client,identity}=await authorizedSpace();const channel=client.channel('seiri:'+identity.workspaceId,{config:{private:true}}).on('broadcast',{event:'sync'},()=>{if(identity.valid()&&win&&!win.isDestroyed())win.webContents.send('cloud-sync-wake');});channel.subscribe();closeSyncWatch=()=>{client.removeChannel(channel).catch(()=>{});};return true;});
+  handle('cloud-sync:file-info',()=>cloudFiles.links());
+  handle('cloud-sync:file-upload',async(meta,bytes)=>{const {client,identity}=await authorizedSpace();return cloudFiles.upload(client,identity,meta,bytes);});
+  handle('cloud-sync:file-download',async(id,assetId)=>{const {client,identity}=await authorizedSpace();return cloudFiles.download(client,identity,id,assetId);});
+
+  const backups=()=>require('./backup-store.cjs').createStore(path.join(activeSpace.root,'Seiri Backups'));
+  handle('backup:list',()=>({items:backups().list(),keep:backups().keep,maxBytes:backups().maxBytes}));
+  handle('backup:create',text=>backups().write(text));
+  handle('backup:read',id=>backups().read(id));
+  handle('updates:check',()=>require('./update-check.cjs').check(metadata.version));
+  handle('desktop:info',()=>({space:spaceInfo(),version:app.getVersion(),platform:process.platform,arch:process.arch,delivered:state.delivered,notifications:Notification.isSupported(),login:app.getLoginItemSettings().openAtLogin}));
   handle('desktop:external',url=>external(String(url)));
   handle('desktop:login',enabled=>{app.setLoginItemSettings({openAtLogin:enabled===true});return app.getLoginItemSettings().openAtLogin;});
   handle('desktop:schedule',items=>{if(!Array.isArray(items)||items.length>201)throw Error('Geçersiz liste');const delivered=new Set(state.delivered.map(n=>n.id+'@'+n.at));state.reminders=items.filter(n=>n&&typeof n.id==='string'&&typeof n.entryId==='string'&&Number.isSafeInteger(n.at)&&n.at>Date.now()&&!delivered.has(n.id+'@'+n.at)).map(n=>({id:n.id.slice(0,160),entryId:n.entryId.slice(0,100),at:n.at,title:String(n.title).slice(0,160),body:String(n.body).slice(0,500)})).map(n=>security?security.redact(n):n);persist();return true;});
   handle('desktop:test',()=>{state.reminders.push({id:'test-'+Date.now(),entryId:'',at:Date.now()+5000,title:'Seiri test bildirimi',body:'Windows hatırlatmaları bu alanda görünecek.'});persist();return true;});
   handle('desktop:pdf',async bytes=>{if(!(bytes instanceof Uint8Array)||bytes.byteLength>10*1024*1024)throw Error('Dosya sınırı');const b=Buffer.from(bytes);if(b.subarray(0,5).toString()!=='%PDF-')throw Error('PDF değil');const file=path.join(app.getPath('temp'),'seiri-'+require('node:crypto').randomUUID()+'.pdf');fs.writeFileSync(file,b);const error=await shell.openPath(file);if(error)throw Error(error);return true;});
-  tray=new Tray(nativeImage.createFromPath(path.join(__dirname,'icon.png')).resize({width:32,height:32}));tray.setToolTip('Seiri · Takvim ve Ajanda');tray.setContextMenu(Menu.buildFromTemplate([{label:'Seiri’yi aç',click:show},{label:'Hatırlatmalar için arka planda çalışıyor',enabled:false},{type:'separator'},{label:'Çıkış',click:()=>{quitting=true;app.quit();}}]));tray.on('double-click',show);
+  tray=new Tray(nativeImage.createFromPath(path.join(__dirname,'icon.png')).resize({width:32,height:32}));tray.setToolTip(metadata.productName+' '+metadata.version);tray.setContextMenu(Menu.buildFromTemplate([{label:'Seiri’yi aç',click:show},{label:'Hatırlatmalar için arka planda çalışıyor',enabled:false},{type:'separator'},{label:'Çıkış',click:()=>{quitting=true;app.quit();}}]));tray.on('double-click',show);
   Menu.setApplicationMenu(Menu.buildFromTemplate([{label:'Seiri',submenu:[{label:'Yenile',role:'reload'},{label:'Yakınlaştır',role:'zoomIn'},{label:'Uzaklaştır',role:'zoomOut'},{label:'Varsayılan boyut',role:'resetZoom'},{type:'separator'},{label:'Çıkış',click:()=>{quitting=true;app.quit();}}]},{label:'Düzenle',submenu:[{role:'undo',label:'Geri al'},{role:'redo',label:'Yinele'},{type:'separator'},{role:'cut',label:'Kes'},{role:'copy',label:'Kopyala'},{role:'paste',label:'Yapıştır'},{role:'selectAll',label:'Tümünü seç'}]}]));
   if(process.platform==='win32'){const shortcut=path.join(app.getPath('appData'),'Microsoft','Windows','Start Menu','Programs','Seiri.lnk');try{shell.writeShortcutLink(shortcut,'create',{target:process.execPath,cwd:path.dirname(process.execPath),description:'Seiri · Takvim ve Ajanda',icon:path.join(__dirname,'icon.ico'),iconIndex:0,appUserModelId:'com.optimetechnology.seiri'});}catch{}}
   createWindow();tick();setInterval(tick,1000);app.on('activate',show);
- });
+ }).catch(()=>{dialog.showErrorBox('Veri alanı açılamadı','Hesap veya yerel veri dosyası okunamadı. Veriler silinmedi; uygulama veri klasörünü koruyup yedeğini kontrol et.');app.quit();});
 }

@@ -1,18 +1,25 @@
 {
   "name": "seiri",
   "productName": "Seiri",
-  "version": "1.9.0",
-  "description": "Seiri — Takvim, notlar ve odak stüdyosu",
+  "version": "1.16.0",
+  "description": "Seiri — Ders notları, günlük plan ve odak",
   "author": "Optime Technology",
   "private": true,
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "electron .",
     "build:web": "python scripts/package_web.py",
-    "test": "node scripts/test.mjs && node scripts/test_ui.mjs && node scripts/test_study.mjs && node scripts/test_security.mjs && node scripts/test_planner.mjs && node scripts/test_plan_transactions.mjs && node scripts/test_migration.mjs && node scripts/test_sound.mjs && node scripts/test_motion.mjs && node scripts/test_refinement.mjs && node scripts/test_workspace.mjs && node scripts/test_covers.mjs && node scripts/test_notebook190.mjs",
-    "package:win": "python scripts/package_windows.py"
+    "test": "node scripts/test.mjs && node scripts/test_ui.mjs && node scripts/test_study.mjs && node scripts/test_security.mjs && node scripts/test_planner.mjs && node scripts/test_plan_transactions.mjs && node scripts/test_migration.mjs && node scripts/test_sound.mjs && node scripts/test_motion.mjs && node scripts/test_refinement.mjs && node scripts/test_workspace.mjs && node scripts/test_covers.mjs && node scripts/test_notebook190.mjs && node scripts/test_appearance111.mjs && node scripts/test_reliability112.mjs && node scripts/test_backup_roundtrip112.mjs && node scripts/test_learning113.mjs && node scripts/test_starter114.mjs && node scripts/test_cloud115.mjs && node scripts/test_sync116.mjs && node scripts/test_cloud_files116.mjs",
+    "package:win": "python scripts/package_windows.py",
+    "test:dom": "node scripts/test_dom112.mjs && node scripts/test_dom113.mjs && node scripts/test_dom114.mjs && node scripts/test_dom115.mjs && node scripts/test_dom116.mjs",
+    "configure:cloud": "python scripts/configure_cloud.py"
   },
   "devDependencies": {
-    "electron": "45.3.0"
+    "electron": "45.3.0",
+    "fake-indexeddb": "6.0.1",
+    "jsdom": "26.1.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.1"
   }
 }

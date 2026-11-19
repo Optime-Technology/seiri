@@ -1,0 +1,37 @@
+{
+  "format": "seiri-study-kit",
+  "version": 1,
+  "id": "lecture-week",
+  "name": "Ders haftası",
+  "course": {
+    "name": "Dersim",
+    "term": ""
+  },
+  "notes": [
+    {
+      "title": "Ders notu",
+      "subject": "Haftanın konusu",
+      "html": "<h2>Konu</h2><p><br></p><h2>Kavramlar</h2><p><br></p><h2>Sorular</h2><p><br></p><h2>Kısa özet</h2>",
+      "tags": [
+        "ders"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Ders notunu tamamla",
+      "note": 0,
+      "day": 0,
+      "minutes": 25,
+      "priority": 2
+    },
+    {
+      "title": "Konuyu tekrar et",
+      "note": 0,
+      "day": 1,
+      "minutes": 15,
+      "priority": 2,
+      "review": true
+    }
+  ]
+}

@@ -6,9 +6,26 @@ $oldFocus = Join-Path $env:LOCALAPPDATA 'Programs\FocusFlow\FocusFlow.exe'
 $oldZaman = Join-Path $env:LOCALAPPDATA 'Programs\Zaman\Zaman.exe'
 $running = Get-Process -Name Seiri,FocusFlow,Zaman -ErrorAction SilentlyContinue
 if ($running) { throw 'Seiri veya eski surum acik. Sistem tepsisinden Cikis secip yeniden deneyin.' }
+# Yeni dosyalar ayrı bir dizinde hazırlanır; kopyalama hatası çalışan kurulumu bozmaz.
 if ([IO.Path]::GetFullPath($source).TrimEnd('\') -ne [IO.Path]::GetFullPath($target).TrimEnd('\')) {
- New-Item -ItemType Directory -Path $target -Force | Out-Null
- Get-ChildItem -LiteralPath $source | Copy-Item -Destination $target -Recurse -Force
+ $installParent = Split-Path -Parent $target
+ New-Item -ItemType Directory -Path $installParent -Force | Out-Null
+ $installStage = Join-Path $installParent ('Seiri.update-' + [Guid]::NewGuid().ToString('N'))
+ $oldInstall = Join-Path $installParent 'Seiri.previous'
+ try {
+  New-Item -ItemType Directory -Path $installStage -Force | Out-Null
+  Get-ChildItem -LiteralPath $source | Copy-Item -Destination $installStage -Recurse -Force
+  $stagedExe = Join-Path $installStage 'Seiri.exe'
+  $report = Get-Content -LiteralPath (Join-Path $installStage 'DOGRULAMA.json') -Raw | ConvertFrom-Json
+  if ((Get-FileHash -LiteralPath $stagedExe -Algorithm SHA256).Hash.ToLowerInvariant() -ne $report.custom_executable_sha256) { throw 'Uygulama dosyasi dogrulanamadi. ZIP dosyasini yeniden indirin.' }
+  if (Test-Path -LiteralPath $oldInstall) { Remove-Item -LiteralPath $oldInstall -Recurse -Force }
+  if (Test-Path -LiteralPath $target) { Move-Item -LiteralPath $target -Destination $oldInstall }
+  try { Move-Item -LiteralPath $installStage -Destination $target }
+  catch {
+   if ((Test-Path -LiteralPath $oldInstall) -and !(Test-Path -LiteralPath $target)) { Move-Item -LiteralPath $oldInstall -Destination $target }
+   throw
+  }
+ } finally { if (Test-Path -LiteralPath $installStage) { Remove-Item -LiteralPath $installStage -Recurse -Force } }
 }
 $exe = Join-Path $target 'Seiri.exe'
 $ws = New-Object -ComObject WScript.Shell
